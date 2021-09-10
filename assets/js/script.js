@@ -1,10 +1,12 @@
 var tasks = {};
 
-var createTask = function(taskText, taskDate, taskList) {
+var createTask = function (taskText, taskDate, taskList) {
   // create elements that make up a task item
   var taskLi = $("<li>").addClass("list-group-item");
 
-  var taskSpan = $("<span>").addClass("badge badge-primary badge-pill").text(taskDate);
+  var taskSpan = $("<span>")
+    .addClass("badge badge-primary badge-pill")
+    .text(taskDate);
 
   var taskP = $("<p>").addClass("m-1").text(taskText);
 
@@ -82,11 +84,11 @@ $(".list-group").on("click", "span", function () {
 
   dateInput.datepicker({
     minDate: 0,
-    onClose: function() {
+    onClose: function () {
       // when calendar is closed, force a "change" event on the `dateInput`
       $(this).trigger("change");
-    }
-  })
+    },
+  });
 
   // automatically focus on new element
   dateInput.trigger("focus");
@@ -128,7 +130,7 @@ $("#task-form-modal").on("shown.bs.modal", function () {
 });
 
 // save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function () {
+$("#task-form-modal .btn-save").click(function () {
   // get form values
   var taskText = $("#modalTaskDescription").val();
   var taskDate = $("#modalDueDate").val();
@@ -163,56 +165,60 @@ $(".card .list-group").sortable({
   scroll: false,
   tolerance: "pointer",
   helper: "clone",
-  activate: function(event) {
-    console.log("activate", this);
+  activate: function (event) {
+    $(this).addClass('dropover');
+    $('.bottom-trash').addClass('bottom-trash-drag');
   },
-  deactivate: function(event) {
-    console.log("deactivate", this);
+  deactivate: function (event) {
+    $(this).removeClass('dropover');
+    $('.bottom-trash').removeClass('bottom-trash-drag');
   },
-  over: function(event) {
-    console.log("over", event.target);
+  over: function (event) {
+    $(this).addClass('dropover-active')
   },
-  out: function(event) {
-    console.log("out", event.target);
+  out: function (event) {
+    $(this).removeClass('dropover-active')
   },
-  update: function(event) {
+  update: function (event) {
     var tempArr = [];
-    $(this).children().each(function() {
-      var text = $(this).find('p').text().trim();
+    $(this)
+      .children()
+      .each(function () {
+        var text = $(this).find("p").text().trim();
 
-      var date = $(this).find('span').text().trim();
+        var date = $(this).find("span").text().trim();
 
-      tempArr.push({
-        text: text,
-        date: date
-      })
-    });
-    var arrName = $(this).attr('id').replace("list-", "");
+        tempArr.push({
+          text: text,
+          date: date,
+        });
+      });
+    var arrName = $(this).attr("id").replace("list-", "");
 
     tasks[arrName] = tempArr;
     saveTasks();
-  }
+  },
 });
 
 $("#trash").droppable({
   accept: ".card .list-group-item",
   tolerance: "touch",
-  drop: function(event, ui) {
+  drop: function (event, ui) {
     ui.draggable.remove();
   },
-  over: function(event, ui) {
-    console.log("over");
+  over: function (event, ui) {
+    $('.bottom-trash').addClass('bottom-trash-active');
   },
-  out: function(event, ui) {
-    console.log("out");
-  }
+  out: function (event, ui) {
+    $('.bottom-trash').removeClass('bottom-trash-active');
+  },
 });
 
-$('#modalDueDate').datepicker({
-  minDate: 0
+$("#modalDueDate").datepicker({
+  minDate: 0,
 });
 
-var auditTask = function(taskEl) {
+var auditTask = function (taskEl) {
   // get date from task element
   var date = $(taskEl).find("span").text().trim();
 
@@ -222,19 +228,19 @@ var auditTask = function(taskEl) {
   // remove any old classes from element
   $(taskEl).removeClass("list-group-item-warning list-group-item-danger");
 
-   // apply new class if task is near/over due date
-   if (moment().isAfter(time)) {
+  // apply new class if task is near/over due date
+  if (moment().isAfter(time)) {
     $(taskEl).addClass("list-group-item-danger");
-  } 
-  else if (Math.abs(moment().diff(time, "days")) <= 2) {
+  } else if (Math.abs(moment().diff(time, "days")) <= 2) {
     $(taskEl).addClass("list-group-item-warning");
   }
 };
 
-
-
-
-
-
 // load tasks for the first time
 loadTasks();
+
+setInterval(function () {
+  $(".card .list-group-item").each(function (index, el) {
+    auditTask(el);
+  });
+}, 1800000);
